@@ -9,6 +9,7 @@ session_start();
     <input type="submit" value="Crear cliente">
 </form>
 <?php
+echo "<head><link rel='stylesheet' href='estilos.css'></head>";
 if (isset($_SESSION['error_create'])) {
     echo "<p style='color:red'>" . $_SESSION['error_create'] . "</p>";
     unset($_SESSION['error_create']);
