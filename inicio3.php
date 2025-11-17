@@ -19,9 +19,9 @@ echo "<h3>Productos:</h3><pre>";
 $vc->listarProductos();
 echo "</pre>";
 
-// Crear socios
-$vc->incluirSocio("Amancio Ortega");
-$vc->incluirSocio("Pablo Picasso", 2);
+// // Crear socios
+// $vc->incluirSocio("Amancio Ortega");
+// $vc->incluirSocio("Pablo Picasso", 2);
 
 try {
     $vc->alquilaSocioProducto(2, 2)

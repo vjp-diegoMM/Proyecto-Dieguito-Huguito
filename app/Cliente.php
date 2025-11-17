@@ -1,6 +1,7 @@
 <?php
 
 namespace Dwes\ProyectoVideoclub;
+use Dwes\ProyectoVideoclub;
 
 use Dwes\ProyectoVideoclub\Util\SoporteYaAlquiladoException;
 use Dwes\ProyectoVideoclub\Util\CupoSuperadoException;
@@ -18,11 +19,11 @@ class Cliente
         private string $nombre,
         private int $numero,
         string $user,
-        string $password,
+        string $contrasena,
         private int $maxAlquilerConcurrente = 3
     ) {
         $this->usuario = $user;
-        $this->contrasena = $password;
+        $this->contrasena = $contrasena;
     }
 
     public function setAlquiler($alquiler)
@@ -45,7 +46,7 @@ class Cliente
         return $this->contrasena;
     }
 
-    public function getNombre()
+    public function getNombre(): string
     {
         return $this->nombre;
     }
