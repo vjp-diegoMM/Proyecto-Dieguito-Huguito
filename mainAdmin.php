@@ -1,6 +1,9 @@
 <?php
 session_start();
 
+require_once 'app/Cliente.php';
+use Dwes\ProyectoVideoclub\Cliente;
+
 if (!isset($_SESSION['usuario']) || $_SESSION['usuario'] !== 'admin') {
     header('Location: index.php');
     exit;
@@ -21,7 +24,11 @@ $soportes = $_SESSION['soportes'] ?? [];
     <h3>Listado de Clientes</h3>
     <ul>
         <?php foreach ($clientes as $cliente): ?>
-            <li><?php echo $cliente['nombre']; ?></li>
+            <li>
+                <?php
+                echo $cliente->getNombre() . ' - Usuario: ' . $cliente->getUsuario();
+                ?>
+            </li>
         <?php endforeach; ?>
     </ul>
 

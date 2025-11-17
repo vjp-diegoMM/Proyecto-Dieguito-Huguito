@@ -1,4 +1,5 @@
 <?php
+
 namespace Dwes\ProyectoVideoclub;
 
 use Dwes\ProyectoVideoclub\Util\SoporteYaAlquiladoException;
@@ -9,12 +10,40 @@ class Cliente
 {
     private array $soportesAlquilados = [];
     private int $numSoportesAlquilados = 0;
+    private string $usuario;
+    private string $contrasena;
+    private $alquileres = [];
 
     public function __construct(
         private string $nombre,
         private int $numero,
+        string $user,
+        string $password,
         private int $maxAlquilerConcurrente = 3
-    ) {}
+    ) {
+        $this->usuario = $user;
+        $this->contrasena = $password;
+    }
+
+    public function setAlquiler($alquiler)
+    {
+        $this->alquileres[] = $alquiler;
+    }
+
+    public function getAlquileres() : array
+    {
+        return $this->alquileres;
+    }
+
+    public function getUsuario(): string
+    {
+        return $this->usuario;
+    }
+
+    public function getContrasena(): string
+    {
+        return $this->contrasena;
+    }
 
     public function getNombre()
     {
@@ -41,7 +70,7 @@ class Cliente
         return false;
     }
 
-     public function alquilar(Soporte $s)
+    public function alquilar(Soporte $s)
     {
         if ($s->alquilado) {
             throw new SoporteYaAlquiladoException('El soporte ya está alquilado');
@@ -88,8 +117,6 @@ class Cliente
 
     public function muestraResumen(): void
     {
-        echo "{$this->nombre} ({$this->numero}) - Alquileres: {$this->numSoportesAlquilados} <br>";
+        echo "{$this->nombre} ({$this->numero}) - Usuario: {$this->usuario} - Alquileres: {$this->numSoportesAlquilados} <br>";
     }
 }
-    
-?>

@@ -1,4 +1,5 @@
 <?php
+
 namespace Dwes\ProyectoVideoclub;
 
 use Dwes\ProyectoVideoclub\Util\ClienteNoEncontradoException;
@@ -14,14 +15,16 @@ class Videoclub
     public int $numTotalAlquileres = 0;
     public int $numSocios = 0;
 
-    public function getNumProductosAlquilados(): int {
+    public function getNumProductosAlquilados(): int
+    {
         return $this->numProductosAlquilados;
     }
 
-    public function getNumTotalAlquileres(): int {
+    public function getNumTotalAlquileres(): int
+    {
         return $this->numTotalAlquileres;
     }
-    
+
     public function incluirCintaVideo($titulo, $precio, $duracion)
     {
         $numero = count($this->productos) + 1;
@@ -43,10 +46,10 @@ class Videoclub
         $this->productos[] = $dvd;
     }
 
-    public function incluirSocio(string $nombre, int $maxAlquileresConcurrentes = 3): void
+    public function incluirSocio(string $nombre, string $user, string $password, int $maxAlquileresConcurrentes = 3): void
     {
         $this->numSocios++;
-        $this->socios[] = new Cliente($nombre, $this->numSocios, $maxAlquileresConcurrentes);
+        $this->socios[] = new Cliente($nombre, $this->numSocios, $user, $password, $maxAlquileresConcurrentes);
     }
 
     public function listarProductos(): void
@@ -125,7 +128,7 @@ class Videoclub
         return $this;
     }
 
-     public function devolverSocioProducto(int $numSocio, int $numeroProducto)
+    public function devolverSocioProducto(int $numSocio, int $numeroProducto)
     {
         return $this->devolverSocioProductos($numSocio, [$numeroProducto]);
     }
@@ -171,4 +174,3 @@ class Videoclub
         return $this;
     }
 }
-?>
