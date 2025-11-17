@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Inicio de sesión</title>
+    <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
     <?php

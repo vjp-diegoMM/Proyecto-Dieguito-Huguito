@@ -11,7 +11,7 @@ if (!isset($_SESSION['videoclub'])) {
     $_SESSION['videoclub'] = serialize($vc);
 }
 $videoclub = unserialize($_SESSION['videoclub']);
-
+echo "<head><link rel='stylesheet' href='estilos.css'></head>";
 echo "<h2>Listado de Clientes</h2>";
 echo "<ul>";
 foreach ($videoclub->socios as $cliente) {

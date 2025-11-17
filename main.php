@@ -11,6 +11,7 @@ $usuario = $_SESSION['usuario'];
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="stylesheet" href="estilos.css">
     <meta charset="UTF-8">
     <title>Bienvenido</title>
 </head>

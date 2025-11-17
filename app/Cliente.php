@@ -61,6 +61,21 @@ class Cliente
         $this->numero = $numero;
     }
 
+    public function setNombre(string $nombre): void
+    {
+        $this->nombre = $nombre;
+    }
+
+    public function setUsuario(string $usuario): void
+    {
+        $this->usuario = $usuario;
+    }
+
+    public function setContrasena(string $contrasena): void
+    {
+        $this->contrasena = $contrasena;
+    }
+
     public function tieneAlquilado(Soporte $s): bool
     {
         foreach ($this->soportesAlquilados as $al) {

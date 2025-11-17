@@ -22,6 +22,7 @@ echo "</ul>";
 <head>
     <meta charset="UTF-8">
     <title>Panel Cliente</title>
+    <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
     <h2>Bienvenido, <?php echo $cliente->getNombre(); ?>!</h2>
