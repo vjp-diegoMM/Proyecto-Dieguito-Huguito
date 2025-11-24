@@ -1,7 +1,7 @@
 <?php
 // ...al principio de cada archivo que use videoclub...
 session_start();
-require_once 'autoload.php';
+require_once 'vendor/autoload.php';
 
 if (!isset($_SESSION['videoclub'])) {
     $vc = new Dwes\ProyectoVideoclub\Videoclub("Severo 8A");
@@ -25,4 +25,3 @@ foreach ($videoclub->socios as $cliente) {
 echo "</ul>";
 echo "<a href='formCreateCliente.php'>Crear nuevo cliente</a>";
 ?>
-

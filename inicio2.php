@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
 use Dwes\ProyectoVideoclub\CintaVideo;
 use Dwes\ProyectoVideoclub\Dvd;
@@ -21,8 +21,8 @@ $soporte3 = new Dvd("Origen", 3, 4.5, "es,en,fr", "16:9");
 // Alquilar con encadenamiento; capturar excepciones que lancen los métodos
 try {
     $cliente1->alquilar($soporte1)
-             ->alquilar($soporte2)
-             ->alquilar($soporte3);
+        ->alquilar($soporte2)
+        ->alquilar($soporte3);
     echo "Alquileres realizados correctamente.<br>";
 } catch (\Exception $e) {
     echo "Error al alquilar: " . htmlspecialchars($e->getMessage()) . "<br>";

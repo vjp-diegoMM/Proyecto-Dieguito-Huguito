@@ -1,6 +1,6 @@
 <?php
 // Incluimos el archivo de autocarga de clases
-require_once __DIR__ . '/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
 // Importamos las clases que vamos a utilizar
 use Dwes\ProyectoVideoclub\CintaVideo;
@@ -18,11 +18,11 @@ $soporte1->muestraResumen();
 echo "</pre>";
 
 // Creamos un nuevo juego con título, id, precio, consola, jugadores mínimos y máximos
-$miJuego = new Juego("The Last of Us Part II", 26, 49.99, "PS4", 1, 1); 
+$miJuego = new Juego("The Last of Us Part II", 26, 49.99, "PS4", 1, 1);
 
 // Mostramos información del juego
-echo "<strong>" . $miJuego->getTitulo() . "</strong>"; 
-echo "<br>Precio: " . $miJuego->getPrecio() . " euros"; 
+echo "<strong>" . $miJuego->getTitulo() . "</strong>";
+echo "<br>Precio: " . $miJuego->getPrecio() . " euros";
 echo "<br>Precio IVA incluido: " . $miJuego->getPrecioConIVA() . " euros";
 $miJuego->muestraResumen();
 ?>

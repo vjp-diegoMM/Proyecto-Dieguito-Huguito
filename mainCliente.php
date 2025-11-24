@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'autoload.php';
+require_once 'vendor/autoload.php';
 
 if (!isset($_SESSION['usuario'])) {
     header('Location: index.php');
@@ -19,11 +19,13 @@ echo "</ul>";
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Panel Cliente</title>
     <link rel="stylesheet" href="estilos.css">
 </head>
+
 <body>
     <h2>Bienvenido, <?php echo $cliente->getNombre(); ?>!</h2>
 
@@ -52,4 +54,5 @@ echo "</ul>";
 
     <a href="index.php">Cerrar sesión</a>
 </body>
+
 </html>

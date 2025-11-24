@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'autoload.php';
+require_once 'vendor/autoload.php';
 
 $videoclub = unserialize($_SESSION['videoclub']);
 $id = $_GET['id'] ?? null;
@@ -21,7 +21,8 @@ if (!$cliente) {
     <input type="hidden" name="id" value="<?= htmlspecialchars($cliente->getNumero()) ?>">
     Nombre: <input type="text" name="nombre" value="<?= htmlspecialchars($cliente->getNombre()) ?>" required><br>
     Usuario: <input type="text" name="usuario" value="<?= htmlspecialchars($cliente->getUsuario()) ?>" required><br>
-    Contraseña: <input type="password" name="contrasena" value="<?= htmlspecialchars($cliente->getContrasena()) ?>" required><br>
+    Contraseña: <input type="password" name="contrasena" value="<?= htmlspecialchars($cliente->getContrasena()) ?>"
+        required><br>
     <input type="submit" value="Actualizar cliente">
 </form>
 <?php

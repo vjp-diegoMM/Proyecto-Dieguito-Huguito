@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'autoload.php';
+require_once 'vendor/autoload.php';
 
 if (!isset($_SESSION['videoclub'])) {
     $vc = new Dwes\ProyectoVideoclub\Videoclub("Severo 8A");

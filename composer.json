@@ -1,0 +1,22 @@
+{
+    "name": "dwes/videoclub",
+    "description": "Proyecto Videoclub con Composer",
+    "type": "project",
+    "require": {
+        "monolog/monolog": "^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Dwes\\ProyectoVideoclub\\": "app/"
+        }
+    },
+    "authors": [
+        {
+            "name": "User",
+            "email": "user@example.com"
+        }
+    ]
+}

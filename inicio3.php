@@ -1,5 +1,5 @@
 <?php
-require_once 'autoload.php';
+require_once 'vendor/autoload.php';
 
 use Dwes\ProyectoVideoclub\Videoclub;
 
@@ -25,9 +25,9 @@ echo "</pre>";
 
 try {
     $vc->alquilaSocioProducto(2, 2)
-    ->alquilaSocioProducto(1, 3)
-    ->alquilaSocioProducto(1, 2)
-    ->alquilaSocioProducto(1, 6);
+        ->alquilaSocioProducto(1, 3)
+        ->alquilaSocioProducto(1, 2)
+        ->alquilaSocioProducto(1, 6);
 } catch (\Exception $e) {
     echo "<br>Error: " . htmlspecialchars($e->getMessage()) . "<br>";
 }
