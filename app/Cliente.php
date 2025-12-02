@@ -7,6 +7,10 @@ use Dwes\ProyectoVideoclub\Util\SoporteYaAlquiladoException;
 use Dwes\ProyectoVideoclub\Util\CupoSuperadoException;
 use Dwes\ProyectoVideoclub\Util\SoporteNoEncontradoException;
 
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
+use Monolog\Level;
+
 class Cliente
 {
     private array $soportesAlquilados = [];
@@ -14,6 +18,8 @@ class Cliente
     private string $usuario;
     private string $contrasena;
     private $alquileres = [];
+
+    private Logger $logger;
 
     public function __construct(
         private string $nombre,
@@ -24,6 +30,11 @@ class Cliente
     ) {
         $this->usuario = $user;
         $this->contrasena = $contrasena;
+
+        
+        $logFile = dirname(__DIR__) . '/logs/videoclub.log';
+        $this->logger = new Logger('VideoclubLogger');
+        $this->logger->pushHandler(new StreamHandler($logFile, Level::Debug));
     }
 
     public function setAlquiler($alquiler)
@@ -89,9 +100,11 @@ class Cliente
     public function alquilar(Soporte $s)
     {
         if ($s->alquilado) {
+            $this->logger->warning('Intento de alquiler: el soporte ya está alquilado', ['soporte' => $s->getNumero(), 'cliente' => $this->numero]);
             throw new SoporteYaAlquiladoException('El soporte ya está alquilado');
         }
         if ($this->numSoportesAlquilados >= $this->maxAlquilerConcurrente) {
+            $this->logger->warning('Cupo superado al intentar alquilar', ['cliente' => $this->numero, 'max' => $this->maxAlquilerConcurrente]);
             throw new CupoSuperadoException('Se ha superado el cupo de alquileres del cliente');
         }
 
@@ -100,9 +113,10 @@ class Cliente
 
         $s->alquilado = true;
 
-        echo "<br>Alquilado soporte a: " . $this->nombre . "<br><br>";
+        // sustituido echo por log info
+        $this->logger->info("Alquilado soporte a: {$this->nombre}", ['cliente' => $this->numero, 'soporte' => $s->getNumero()]);
+
         $s->muestraResumen();
-        echo "<br>";
 
         return $this;
     }
@@ -116,16 +130,20 @@ class Cliente
                 unset($this->soportesAlquilados[$index]);
                 $this->soportesAlquilados = array_values($this->soportesAlquilados);
                 $this->numSoportesAlquilados--;
+                $this->logger->info("Devolución de soporte {$numSoporte} por cliente {$this->numero}");
                 return $this;
             }
         }
+        $this->logger->warning('Devolución fallida: el soporte no está alquilado por este cliente', ['cliente' => $this->numero, 'soporte' => $numSoporte]);
         throw new SoporteNoEncontradoException('El soporte no está alquilado por este cliente');
     }
 
     public function listarAlquileres(): void
     {
-        echo "Cliente: {$this->nombre} <br>";
-        echo "Alquileres: {$this->numSoportesAlquilados} <br>";
+        // sustituido echo por log info
+        $this->logger->info("Cliente: {$this->nombre}", ['cliente' => $this->numero]);
+        $this->logger->info("Alquileres: {$this->numSoportesAlquilados}", ['cliente' => $this->numero]);
+
         foreach ($this->soportesAlquilados as $al) {
             $al->muestraResumen();
         }
