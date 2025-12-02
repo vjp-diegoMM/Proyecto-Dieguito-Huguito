@@ -6,6 +6,10 @@ use Dwes\ProyectoVideoclub\Util\ClienteNoEncontradoException;
 use Dwes\ProyectoVideoclub\Util\SoporteNoEncontradoException;
 use Dwes\ProyectoVideoclub\Util\VideoclubException;
 
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
+use Monolog\Level;
+
 class Videoclub
 {
     public array $productos = [];
@@ -14,6 +18,15 @@ class Videoclub
     public int $numProductosAlquilados = 0;
     public int $numTotalAlquileres = 0;
     public int $numSocios = 0;
+
+    private Logger $logger;
+
+    public function __construct()
+    {
+        $logFile = dirname(__DIR__) . '/logs/videoclub.log';
+        $this->logger = new Logger('VideoclubLogger');
+        $this->logger->pushHandler(new StreamHandler($logFile, Level::Debug));
+    }
 
     public function getNumProductosAlquilados(): int
     {
@@ -30,6 +43,8 @@ class Videoclub
         $numero = count($this->productos) + 1;
         $cintaVideo = new CintaVideo($titulo, $numero, $precio, $duracion);
         $this->productos[] = $cintaVideo;
+
+        $this->logger->info('Incluida cinta de video', ['titulo' => $titulo, 'numero' => $numero, 'precio' => $precio, 'duracion' => $duracion]);
     }
 
     public function incluirJuego($titulo, $precio, $consola, $minNumeroJugadores, $maxNumeroJugadores)
@@ -37,6 +52,8 @@ class Videoclub
         $numero = count($this->productos) + 1;
         $juego = new Juego($titulo, $numero, $precio, $consola, $minNumeroJugadores, $maxNumeroJugadores);
         $this->productos[] = $juego;
+
+        $this->logger->info('Incluido juego', ['titulo' => $titulo, 'numero' => $numero, 'precio' => $precio, 'consola' => $consola]);
     }
 
     public function incluirDvd($titulo, $precio, $idiomas, $formatoPantalla)
@@ -44,16 +61,21 @@ class Videoclub
         $numero = count($this->productos) + 1;
         $dvd = new Dvd($titulo, $numero, $precio, $idiomas, $formatoPantalla);
         $this->productos[] = $dvd;
+
+        $this->logger->info('Incluido DVD', ['titulo' => $titulo, 'numero' => $numero, 'precio' => $precio, 'idiomas' => $idiomas]);
     }
 
     public function incluirSocio(string $nombre, string $user, string $password, int $maxAlquileresConcurrentes = 3): void
     {
         $this->numSocios++;
         $this->socios[] = new Cliente($nombre, $this->numSocios, $user, $password, $maxAlquileresConcurrentes);
+
+        $this->logger->info('Incluido socio', ['nombre' => $nombre, 'numSocio' => $this->numSocios, 'usuario' => $user, 'maxAlquileres' => $maxAlquileresConcurrentes]);
     }
 
     public function listarProductos(): void
     {
+        $this->logger->info('Listar productos', ['total' => count($this->productos)]);
         foreach ($this->productos as $p) {
             $p->muestraResumen();
         }
@@ -61,16 +83,18 @@ class Videoclub
 
     public function listarSocios(): void
     {
+        $this->logger->info('Listar socios', ['total' => count($this->socios)]);
         foreach ($this->socios as $socio) {
-            echo "<br>";
+            $info = [];
             if (method_exists($socio, 'getNumero')) {
-                echo "Socio #" . $socio->getNumero() . ": ";
+                $info['numero'] = $socio->getNumero();
             }
             if (method_exists($socio, 'getNombre')) {
-                echo $socio->getNombre();
+                $info['nombre'] = $socio->getNombre();
             } else {
-                echo "Nombre no disponible";
+                $info['nombre'] = 'Nombre no disponible';
             }
+            $this->logger->info('Socio', $info);
         }
     }
 
@@ -79,11 +103,10 @@ class Videoclub
         if (is_int($numerosProductos)) {
             $numerosProductos = [$numerosProductos];
         } elseif (!is_array($numerosProductos)) {
-            echo "Parámetros inválidos para alquiler.<br>";
+            $this->logger->warning('Parámetros inválidos para alquiler', ['param' => $numerosProductos, 'numSocio' => $numSocio]);
             return $this;
         }
 
-        // buscar cliente
         $cliente = null;
         foreach ($this->socios as $s) {
             if (method_exists($s, 'getNumero') && $s->getNumero() === $numSocio) {
@@ -92,7 +115,7 @@ class Videoclub
             }
         }
         if (!$cliente) {
-            echo "Cliente no encontrado.<br>";
+            $this->logger->warning('Cliente no encontrado', ['numSocio' => $numSocio]);
             return $this;
         }
         $soportesAAlquilar = [];
@@ -105,11 +128,11 @@ class Videoclub
                 }
             }
             if (!$encontrado) {
-                echo "Soporte #$numProd no encontrado. No se realiza ningún alquiler.<br>";
+                $this->logger->warning('Soporte no encontrado - no se realiza alquiler', ['numProd' => $numProd, 'numSocio' => $numSocio]);
                 return $this;
             }
             if (isset($encontrado->alquilado) && $encontrado->alquilado) {
-                echo "Soporte #$numProd ya está alquilado. No se realiza ningún alquiler.<br>";
+                $this->logger->warning('Soporte ya está alquilado - no se realiza alquiler', ['numProd' => $numProd, 'numSocio' => $numSocio]);
                 return $this;
             }
             $soportesAAlquilar[] = $encontrado;
@@ -120,8 +143,9 @@ class Videoclub
             if ($ok) {
                 $this->numProductosAlquilados++;
                 $this->numTotalAlquileres++;
+                $this->logger->info('Soporte alquilado', ['soporte' => $soporte->getNumero(), 'cliente' => $numSocio]);
             } else {
-                echo "No se pudo alquilar el soporte " . $soporte->getNumero() . " al cliente " . $cliente->getNombre() . "<br>";
+                $this->logger->warning('No se pudo alquilar el soporte', ['soporte' => $soporte->getNumero(), 'cliente' => $numSocio]);
             }
         }
 
@@ -143,7 +167,7 @@ class Videoclub
             }
         }
         if (!$cliente) {
-            echo "Cliente no encontrado.<br>";
+            $this->logger->warning('Cliente no encontrado al devolver', ['numSocio' => $numSocio]);
             return $this;
         }
 
@@ -156,7 +180,7 @@ class Videoclub
                 }
             }
             if (!$soporte) {
-                echo "Soporte #$numProd no encontrado.<br>";
+                $this->logger->warning('Soporte no encontrado al devolver', ['numProd' => $numProd, 'numSocio' => $numSocio]);
                 continue;
             }
 
@@ -166,8 +190,9 @@ class Videoclub
                 if ($this->numProductosAlquilados > 0) {
                     $this->numProductosAlquilados--;
                 }
+                $this->logger->info('Soporte devuelto', ['soporte' => $numProd, 'cliente' => $numSocio]);
             } else {
-                echo "No se pudo devolver el soporte #$numProd para el socio $numSocio<br>";
+                $this->logger->warning('No se pudo devolver el soporte', ['soporte' => $numProd, 'cliente' => $numSocio]);
             }
         }
 
