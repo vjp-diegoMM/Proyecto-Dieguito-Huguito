@@ -6,6 +6,8 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use PHPUnit\Framework\TestCase;
 use Dwes\ProyectoVideoclub\Videoclub;
 use Dwes\ProyectoVideoclub\Cliente;
+use Dwes\ProyectoVideoclub\Util\CupoSuperadoException;
+use Dwes\ProyectoVideoclub\Util\SoporteYaAlquiladoException;
 
 final class VideoclubTest extends TestCase
 {
@@ -112,6 +114,106 @@ final class VideoclubTest extends TestCase
 
         // producto inexistente -> no excepción, no cambios
         $vc->alquilaSocioProducto(1, 999);
+        $this->assertEquals(0, $vc->getNumProductosAlquilados());
+    }
+
+    public function testExcepcionCupoSuperado(): void
+    {
+        $vc = new Videoclub();
+        $vc->incluirCintaVideo(null, 'P1', 1.0, 60);
+        $vc->incluirCintaVideo(null, 'P2', 1.0, 60);
+        $vc->incluirCintaVideo(null, 'P3', 1.0, 60);
+        $vc->incluirCintaVideo(null, 'P4', 1.0, 60);
+        $vc->incluirSocio('Juan', 'juan', 'pass', 2);
+
+        $vc->alquilaSocioProducto(1, 1);
+        $vc->alquilaSocioProducto(1, 2);
+
+        $this->assertEquals(2, $vc->getNumProductosAlquilados());
+
+        $this->expectException(CupoSuperadoException::class);
+        $vc->socios[0]->alquilar($vc->productos[2]);
+    }
+
+    public function testExcepcionSoporteYaAlquilado(): void
+    {
+        $vc = new Videoclub();
+        $vc->incluirCintaVideo(null, 'P1', 1.0, 60);
+        $vc->incluirSocio('Ana', 'ana', 'pass');
+        $vc->incluirSocio('Luis', 'luis', 'pass');
+
+        $vc->alquilaSocioProducto(1, 1);
+        $this->assertTrue($vc->productos[0]->alquilado);
+
+        $this->expectException(SoporteYaAlquiladoException::class);
+        $vc->socios[1]->alquilar($vc->productos[0]);
+    }
+
+    public function testListarProductos(): void
+    {
+        $vc = new Videoclub();
+        $vc->incluirCintaVideo(null, 'Película A', 2.5, 100);
+        $vc->incluirDvd(null, 'DVD B', 3.0, ['es'], '16:9');
+        
+        // No lanza excepción
+        $vc->listarProductos();
+        $this->assertCount(2, $vc->productos);
+    }
+
+    public function testListarSocios(): void
+    {
+        $vc = new Videoclub();
+        $vc->incluirSocio('Ana', 'ana', 'pass');
+        $vc->incluirSocio('Luis', 'luis', 'pass');
+        
+        // No lanza excepción
+        $vc->listarSocios();
+        $this->assertCount(2, $vc->socios);
+    }
+
+    public function testDevolverSocioProductosMultiple(): void
+    {
+        $vc = new Videoclub();
+        $vc->incluirCintaVideo(null, 'P1', 1.0, 60);
+        $vc->incluirDvd(null, 'P2', 1.5, ['es'], '4:3');
+        $vc->incluirJuego(null, 'P3', 2.0, 'Switch', 1, 2);
+        $vc->incluirSocio('Pepe', 'pepe', 'pass', 5);
+
+        $vc->alquilaSocioProducto(1, [1, 2, 3]);
+        $this->assertEquals(3, $vc->getNumProductosAlquilados());
+        $this->assertCount(3, $vc->socios[0]->getAlquileres());
+
+        $vc->devolverSocioProductos(1, [1, 2, 3]);
+        $this->assertEquals(0, $vc->getNumProductosAlquilados());
+        $this->assertCount(0, $vc->socios[0]->getAlquileres());
+    }
+
+    public function testDevolverProductoInexistente(): void
+    {
+        $vc = new Videoclub();
+        $vc->incluirCintaVideo(null, 'P1', 1.0, 60);
+        $vc->incluirSocio('A', 'a', 'p');
+
+        $vc->alquilaSocioProducto(1, 1);
+
+        // Intenta devolver producto que no existe
+        $vc->devolverSocioProducto(1, 999);
+        
+        // El producto original aún debe estar alquilado
+        $this->assertTrue($vc->productos[0]->alquilado);
+        $this->assertEquals(1, $vc->getNumProductosAlquilados());
+    }
+
+    public function testAlquilarConClienteInexistenteDevoluciones(): void
+    {
+        $vc = new Videoclub();
+        $vc->incluirCintaVideo(null, 'P1', 1.0, 60);
+        $vc->incluirSocio('A', 'a', 'p');
+
+        // Intenta devolver con cliente inexistente
+        $vc->devolverSocioProducto(99, 1);
+        
+        // No debe lanzar excepción, todo debe estar igual
         $this->assertEquals(0, $vc->getNumProductosAlquilados());
     }
 }

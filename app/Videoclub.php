@@ -116,12 +116,23 @@ class Videoclub
     {
         $this->logger->info('Listar socios', ['total' => count($this->socios)]);
         foreach ($this->socios as $socio) {
-            $info = [
-                'numero' => method_exists($socio, 'getNumero') ? $socio->getNumero() : null,
-                'nombre' => method_exists($socio, 'getNombre') ? $socio->getNombre() : null
-            ];
-            $this->logger->info('Socio', $info);
+            $this->registrarInfoSocio($socio);
         }
+    }
+
+    /**
+     * Registra la información de un socio en el log
+     */
+    private function registrarInfoSocio(Cliente $socio): void
+    {
+        $info = [];
+        if (method_exists($socio, 'getNumero')) {
+            $info['numero'] = $socio->getNumero();
+        }
+        if (method_exists($socio, 'getNombre')) {
+            $info['nombre'] = $socio->getNombre();
+        }
+        $this->logger->info('Socio', $info);
     }
 
     public function alquilaSocioProducto(int $numSocio, $numerosProductos)
@@ -134,44 +145,68 @@ class Videoclub
         }
 
         // buscar cliente
-        $cliente = null;
-        foreach ($this->socios as $s) {
-            if (method_exists($s, 'getNumero') && $s->getNumero() === $numSocio) {
-                $cliente = $s;
-                break;
-            }
-        }
+        $cliente = $this->obtenerClientePorNumero($numSocio);
         if (!$cliente) {
-            $this->logger->warning('Cliente no encontrado', ['numSocio' => $numSocio]);
             return $this;
         }
 
-        $soportesAAlquilar = [];
-        foreach ($numerosProductos as $numProd) {
-            $encontrado = null;
-            foreach ($this->productos as $p) {
-                if ($p->getNumero() === $numProd) {
-                    $encontrado = $p;
-                    break;
-                }
-            }
-            if (!$encontrado) {
-                $this->logger->warning('Soporte no encontrado - no se realiza alquiler', ['numProd' => $numProd, 'numSocio' => $numSocio]);
-                return $this;
-            }
-            if (isset($encontrado->alquilado) && $encontrado->alquilado) {
-                $this->logger->warning('Soporte ya está alquilado - no se realiza alquiler', ['numProd' => $numProd, 'numSocio' => $numSocio]);
-                return $this;
-            }
-            $soportesAAlquilar[] = $encontrado;
+        // validar y obtener soportes
+        $soportes = $this->validarYObtenerSoportes($numerosProductos, $numSocio);
+        if (empty($soportes)) {
+            return $this;
         }
 
-        foreach ($soportesAAlquilar as $soporte) {
+        // registrar alquileres
+        $this->registrarAlquileres($cliente, $soportes, $numSocio);
+
+        return $this;
+    }
+
+    /**
+     * Obtiene un cliente por su número
+     */
+    private function obtenerClientePorNumero(int $numSocio): ?Cliente
+    {
+        foreach ($this->socios as $s) {
+            if (method_exists($s, 'getNumero') && $s->getNumero() === $numSocio) {
+                return $s;
+            }
+        }
+        $this->logger->warning('Cliente no encontrado', ['numSocio' => $numSocio]);
+        return null;
+    }
+
+    /**
+     * Valida y obtiene todos los soportes para alquilar
+     * @return array
+     */
+    private function validarYObtenerSoportes(array $numerosProductos, int $numSocio): array
+    {
+        $soportes = [];
+        foreach ($numerosProductos as $numProd) {
+            $soporte = $this->obtenerProductoPorNumero($numProd);
+            if (!$soporte) {
+                $this->logger->warning('Soporte no encontrado - no se realiza alquiler', ['numProd' => $numProd, 'numSocio' => $numSocio]);
+                return [];
+            }
+            if (isset($soporte->alquilado) && $soporte->alquilado) {
+                $this->logger->warning('Soporte ya está alquilado - no se realiza alquiler', ['numProd' => $numProd, 'numSocio' => $numSocio]);
+                return [];
+            }
+            $soportes[] = $soporte;
+        }
+        return $soportes;
+    }
+
+    /**
+     * Registra los alquileres en el cliente
+     */
+    private function registrarAlquileres(Cliente $cliente, array $soportes, int $numSocio): void
+    {
+        foreach ($soportes as $soporte) {
             $ok = $cliente->alquilar($soporte);
             if ($ok) {
-                // registrar el alquiler también en getAlquileres() del cliente (setAlquiler evita duplicados)
                 $cliente->setAlquiler($soporte);
-
                 $this->numProductosAlquilados++;
                 $this->numTotalAlquileres++;
                 $this->logger->info('Soporte alquilado', ['soporte' => $soporte->getNumero(), 'cliente' => $numSocio]);
@@ -179,8 +214,6 @@ class Videoclub
                 $this->logger->warning('No se pudo alquilar el soporte', ['soporte' => $soporte->getNumero(), 'cliente' => $numSocio]);
             }
         }
-
-        return $this;
     }
 
     public function devolverSocioProducto(int $numSocio, int $numeroProducto)
@@ -190,43 +223,51 @@ class Videoclub
 
     public function devolverSocioProductos(int $numSocio, array $numerosProductos)
     {
-        $cliente = null;
-        foreach ($this->socios as $s) {
-            if (method_exists($s, 'getNumero') && $s->getNumero() === $numSocio) {
-                $cliente = $s;
-                break;
-            }
-        }
+        $cliente = $this->obtenerClientePorNumero($numSocio);
         if (!$cliente) {
-            $this->logger->warning('Cliente no encontrado al devolver', ['numSocio' => $numSocio]);
             return $this;
         }
 
         foreach ($numerosProductos as $numProd) {
-            $soporte = null;
-            foreach ($this->productos as $p) {
-                if ($p->getNumero() === $numProd) {
-                    $soporte = $p;
-                    break;
-                }
-            }
-            if (!$soporte) {
-                $this->logger->warning('Soporte no encontrado al devolver', ['numProd' => $numProd, 'numSocio' => $numSocio]);
-                continue;
-            }
-
-            $devuelto = $cliente->devolver($numProd);
-            if ($devuelto) {
-                $soporte->alquilado = false;
-                if ($this->numProductosAlquilados > 0) {
-                    $this->numProductosAlquilados--;
-                }
-                $this->logger->info('Soporte devuelto', ['soporte' => $numProd, 'cliente' => $numSocio]);
-            } else {
-                $this->logger->warning('No se pudo devolver el soporte', ['soporte' => $numProd, 'cliente' => $numSocio]);
-            }
+            $this->devolverProductoDelCliente($cliente, $numProd, $numSocio);
         }
 
         return $this;
+    }
+
+    /**
+     * Obtiene un producto por su número
+     */
+    private function obtenerProductoPorNumero(int $numProd): ?Soporte
+    {
+        foreach ($this->productos as $p) {
+            if ($p->getNumero() === $numProd) {
+                return $p;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Devuelve un producto individual del cliente
+     */
+    private function devolverProductoDelCliente(Cliente $cliente, int $numProd, int $numSocio): void
+    {
+        $soporte = $this->obtenerProductoPorNumero($numProd);
+        if (!$soporte) {
+            $this->logger->warning('Soporte no encontrado al devolver', ['numProd' => $numProd, 'numSocio' => $numSocio]);
+            return;
+        }
+
+        $devuelto = $cliente->devolver($numProd);
+        if ($devuelto) {
+            $soporte->alquilado = false;
+            if ($this->numProductosAlquilados > 0) {
+                $this->numProductosAlquilados--;
+            }
+            $this->logger->info('Soporte devuelto', ['soporte' => $numProd, 'cliente' => $numSocio]);
+        } else {
+            $this->logger->warning('No se pudo devolver el soporte', ['soporte' => $numProd, 'cliente' => $numSocio]);
+        }
     }
 }
