@@ -3,6 +3,6 @@ namespace Dwes\ProyectoVideoclub;
 
 interface Resumible
 {
-    public function muestraResumen();
+    public function muestraResumen(): string;
 }
 ?>

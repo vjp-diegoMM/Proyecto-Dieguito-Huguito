@@ -46,7 +46,7 @@ class Videoclub
         return $this->numTotalAlquileres;
     }
 
-    public function incluirCintaVideo(string $metacriticUrl, string $titulo, float $precio, int $duracion)
+    public function incluirCintaVideo( $metacriticUrl, string $titulo, float $precio, int $duracion)
     {
         $numero = count($this->productos) + 1;
         $cintaVideo = new CintaVideo($titulo, $numero, $precio, $duracion, $metacriticUrl);
@@ -61,7 +61,7 @@ class Videoclub
         ]);
     }
 
-    public function incluirJuego(string $metacriticUrl, string $titulo, float $precio, string $consola, int $minNumeroJugadores, int $maxNumeroJugadores)
+    public function incluirJuego( $metacriticUrl, string $titulo, float $precio, string $consola, int $minNumeroJugadores, int $maxNumeroJugadores)
     {
         $numero = count($this->productos) + 1;
         $juego = new Juego($titulo, $numero, $precio, $consola, $minNumeroJugadores, $maxNumeroJugadores, $metacriticUrl);
@@ -76,7 +76,7 @@ class Videoclub
         ]);
     }
 
-    public function incluirDvd(string $metacriticUrl, string $titulo, float $precio, $idiomas, $formatoPantalla)
+    public function incluirDvd( $metacriticUrl, string $titulo, float $precio, $idiomas, $formatoPantalla)
     {
         $numero = count($this->productos) + 1;
         $dvd = new Dvd($titulo, $numero, $precio, $idiomas, $formatoPantalla, $metacriticUrl);
