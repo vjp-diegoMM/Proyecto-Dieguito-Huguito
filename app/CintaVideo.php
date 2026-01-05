@@ -23,11 +23,11 @@ class CintaVideo extends Soporte
     }
 
     // opcional: override muestraResumen para incluir duracion
-    public function muestraResumen(): void
+    public function muestraResumen(): string
     {
         $titulo = htmlspecialchars($this->getTitulo(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        echo "<div>CintaVideo #{$this->getNumero()}: {$titulo} — {$this->duracion} min — {$this->getPrecio()}€" . ($this->alquilado ? " (alquilado)" : "") . "</div>\n";
+        $mensaje = "<div>CintaVideo #{$this->getNumero()}: {$titulo} — {$this->duracion} min — {$this->getPrecio()}€" . ($this->alquilado ? " (alquilado)" : "") . "</div>\n";
+        echo $mensaje;
+        return $mensaje;
     }
 }
-    
-?>

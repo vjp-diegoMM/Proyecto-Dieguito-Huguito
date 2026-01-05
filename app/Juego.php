@@ -26,10 +26,11 @@ class Juego extends Soporte
         return $this->fetchMetacriticScore();
     }
 
-    public function muestraResumen(): void
+    public function muestraResumen(): string
     {
         $titulo = htmlspecialchars($this->getTitulo(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        echo "<div>Juego #{$this->getNumero()}: {$titulo} — {$this->consola} — {$this->getPrecio()}€" . ($this->alquilado ? " (alquilado)" : "") . "</div>\n";
+        $mensaje = "<div>Juego #{$this->getNumero()}: {$titulo} — {$this->consola} — {$this->getPrecio()}€" . ($this->alquilado ? " (alquilado)" : "") . "</div>\n";
+        echo $mensaje;
+        return $mensaje;
     }
 }
-?>

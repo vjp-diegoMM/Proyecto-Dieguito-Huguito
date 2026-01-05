@@ -2,11 +2,6 @@
 
 namespace Dwes\ProyectoVideoclub;
 
-interface Resumible
-{
-    public function muestraResumen(): void;
-}
-
 abstract class Soporte implements Resumible
 {
     private const IVA = 21;
@@ -89,7 +84,7 @@ abstract class Soporte implements Resumible
         }
 
         // buscar spans con clase metascore_w o metascore_w large (estructura típica)
-        if (preg_match('/<span[^>]*class=["\'][^"\']*metascore_w[^"\']*["\'][^>]*>\s*(\d{1,3})\s*<\/span>/i', $html, $m)) {
+        if (preg_match('/<span[^>]*class=["\']?[^"\']*metascore_w[^"\']*["\']?[^>]*>\s*(\d{1,3})\s*<\/span>/i', $html, $m)) {
             return (float)$m[1];
         }
 
@@ -105,9 +100,11 @@ abstract class Soporte implements Resumible
     abstract public function getPuntuacion(): ?float;
 
     // Resumen básico (usa htmlspecialchars para evitar inyección al mostrar)
-    public function muestraResumen(): void
+    public function muestraResumen(): string
     {
         $titulo = htmlspecialchars($this->titulo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        echo "<div>Soporte #{$this->numero}: {$titulo} — precio {$this->precio}€" . ($this->alquilado ? " (alquilado)" : "") . "</div>\n";
+        $mensaje = "<div>Soporte #{$this->numero}: {$titulo} — precio {$this->precio}€" . ($this->alquilado ? " (alquilado)" : "") . "</div>\n";
+        echo $mensaje;
+        return $mensaje;
     }
-}
+} 
