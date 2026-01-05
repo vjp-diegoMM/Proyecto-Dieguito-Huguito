@@ -1,22 +1,33 @@
 <?php
+
 namespace Dwes\ProyectoVideoclub;
 
-include_once 'Soporte.php';
-    class CintaVideo extends Soporte
+class CintaVideo extends Soporte
+{
+    private int $duracion;
+
+    public function __construct(string $titulo, int $numero, float $precio, int $duracion, ?string $metacritic = null)
     {
-        private int $duracion;
-
-        public function __construct(string $titulo, int $numero, float $precio, int $duracion)
-        {
-            parent::__construct($titulo, $numero, $precio);
-            $this->duracion = $duracion;
-        }
-
-        public function muestraResumen(): void
-        {
-            parent::muestraResumen();
-            echo " Duración: {$this->duracion} min <br>";
-        }
+        parent::__construct($titulo, $numero, $precio, $metacritic);
+        $this->duracion = $duracion;
     }
+
+    public function getDuracion(): int
+    {
+        return $this->duracion;
+    }
+
+    public function getPuntuacion(): ?float
+    {
+        return $this->fetchMetacriticScore();
+    }
+
+    // opcional: override muestraResumen para incluir duracion
+    public function muestraResumen(): void
+    {
+        $titulo = htmlspecialchars($this->getTitulo(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        echo "<div>CintaVideo #{$this->getNumero()}: {$titulo} — {$this->duracion} min — {$this->getPrecio()}€" . ($this->alquilado ? " (alquilado)" : "") . "</div>\n";
+    }
+}
     
 ?>

@@ -20,12 +20,20 @@ class Videoclub
     public int $numSocios = 0;
 
     private Logger $logger;
+    private ?string $direccion;
 
-    public function __construct()
+    public function __construct(?string $direccion = null)
     {
-        $logFile = dirname(__DIR__) . '/logs/videoclub.log';
+        $this->direccion = $direccion;
+        // preparar directorio de logs
+        $logsDir = dirname(__DIR__) . '/logs';
+        if (!is_dir($logsDir)) {
+            @mkdir($logsDir, 0777, true);
+        }
+        $logFile = $logsDir . '/videoclub.log';
         $this->logger = new Logger('VideoclubLogger');
         $this->logger->pushHandler(new StreamHandler($logFile, Level::Debug));
+        $this->logger->info('Videoclub inicializado', ['direccion' => $direccion]);
     }
 
     public function getNumProductosAlquilados(): int
@@ -38,31 +46,49 @@ class Videoclub
         return $this->numTotalAlquileres;
     }
 
-    public function incluirCintaVideo($titulo, $precio, $duracion)
+    public function incluirCintaVideo(string $metacriticUrl, string $titulo, float $precio, int $duracion)
     {
         $numero = count($this->productos) + 1;
-        $cintaVideo = new CintaVideo($titulo, $numero, $precio, $duracion);
+        $cintaVideo = new CintaVideo($titulo, $numero, $precio, $duracion, $metacriticUrl);
         $this->productos[] = $cintaVideo;
 
-        $this->logger->info('Incluida cinta de video', ['titulo' => $titulo, 'numero' => $numero, 'precio' => $precio, 'duracion' => $duracion]);
+        $this->logger->info('Incluida cinta de video', [
+            'titulo' => $titulo,
+            'numero' => $numero,
+            'precio' => $precio,
+            'duracion' => $duracion,
+            'metacritic' => $metacriticUrl
+        ]);
     }
 
-    public function incluirJuego($titulo, $precio, $consola, $minNumeroJugadores, $maxNumeroJugadores)
+    public function incluirJuego(string $metacriticUrl, string $titulo, float $precio, string $consola, int $minNumeroJugadores, int $maxNumeroJugadores)
     {
         $numero = count($this->productos) + 1;
-        $juego = new Juego($titulo, $numero, $precio, $consola, $minNumeroJugadores, $maxNumeroJugadores);
+        $juego = new Juego($titulo, $numero, $precio, $consola, $minNumeroJugadores, $maxNumeroJugadores, $metacriticUrl);
         $this->productos[] = $juego;
 
-        $this->logger->info('Incluido juego', ['titulo' => $titulo, 'numero' => $numero, 'precio' => $precio, 'consola' => $consola]);
+        $this->logger->info('Incluido juego', [
+            'titulo' => $titulo,
+            'numero' => $numero,
+            'precio' => $precio,
+            'consola' => $consola,
+            'metacritic' => $metacriticUrl
+        ]);
     }
 
-    public function incluirDvd($titulo, $precio, $idiomas, $formatoPantalla)
+    public function incluirDvd(string $metacriticUrl, string $titulo, float $precio, $idiomas, $formatoPantalla)
     {
         $numero = count($this->productos) + 1;
-        $dvd = new Dvd($titulo, $numero, $precio, $idiomas, $formatoPantalla);
+        $dvd = new Dvd($titulo, $numero, $precio, $idiomas, $formatoPantalla, $metacriticUrl);
         $this->productos[] = $dvd;
 
-        $this->logger->info('Incluido DVD', ['titulo' => $titulo, 'numero' => $numero, 'precio' => $precio, 'idiomas' => $idiomas]);
+        $this->logger->info('Incluido DVD', [
+            'titulo' => $titulo,
+            'numero' => $numero,
+            'precio' => $precio,
+            'idiomas' => $idiomas,
+            'metacritic' => $metacriticUrl
+        ]);
     }
 
     public function incluirSocio(string $nombre, string $user, string $password, int $maxAlquileresConcurrentes = 3): void
@@ -70,7 +96,12 @@ class Videoclub
         $this->numSocios++;
         $this->socios[] = new Cliente($nombre, $this->numSocios, $user, $password, $maxAlquileresConcurrentes);
 
-        $this->logger->info('Incluido socio', ['nombre' => $nombre, 'numSocio' => $this->numSocios, 'usuario' => $user, 'maxAlquileres' => $maxAlquileresConcurrentes]);
+        $this->logger->info('Incluido socio', [
+            'nombre' => $nombre,
+            'numSocio' => $this->numSocios,
+            'usuario' => $user,
+            'maxAlquileres' => $maxAlquileresConcurrentes
+        ]);
     }
 
     public function listarProductos(): void
@@ -85,15 +116,10 @@ class Videoclub
     {
         $this->logger->info('Listar socios', ['total' => count($this->socios)]);
         foreach ($this->socios as $socio) {
-            $info = [];
-            if (method_exists($socio, 'getNumero')) {
-                $info['numero'] = $socio->getNumero();
-            }
-            if (method_exists($socio, 'getNombre')) {
-                $info['nombre'] = $socio->getNombre();
-            } else {
-                $info['nombre'] = 'Nombre no disponible';
-            }
+            $info = [
+                'numero' => method_exists($socio, 'getNumero') ? $socio->getNumero() : null,
+                'nombre' => method_exists($socio, 'getNombre') ? $socio->getNombre() : null
+            ];
             $this->logger->info('Socio', $info);
         }
     }
@@ -107,6 +133,7 @@ class Videoclub
             return $this;
         }
 
+        // buscar cliente
         $cliente = null;
         foreach ($this->socios as $s) {
             if (method_exists($s, 'getNumero') && $s->getNumero() === $numSocio) {
@@ -118,6 +145,7 @@ class Videoclub
             $this->logger->warning('Cliente no encontrado', ['numSocio' => $numSocio]);
             return $this;
         }
+
         $soportesAAlquilar = [];
         foreach ($numerosProductos as $numProd) {
             $encontrado = null;
@@ -141,6 +169,9 @@ class Videoclub
         foreach ($soportesAAlquilar as $soporte) {
             $ok = $cliente->alquilar($soporte);
             if ($ok) {
+                // registrar el alquiler también en getAlquileres() del cliente (setAlquiler evita duplicados)
+                $cliente->setAlquiler($soporte);
+
                 $this->numProductosAlquilados++;
                 $this->numTotalAlquileres++;
                 $this->logger->info('Soporte alquilado', ['soporte' => $soporte->getNumero(), 'cliente' => $numSocio]);
