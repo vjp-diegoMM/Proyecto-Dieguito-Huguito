@@ -52,15 +52,17 @@ class Cliente
 
     /**
      * Intenta alquilar un soporte.
-     * Devuelve true si se completó, false en caso contrario.
+     * Devuelve true si se completó, lanza excepción en errores.
+     * @throws CupoSuperadoException
+     * @throws SoporteYaAlquiladoException
      */
     public function alquilar(Soporte $s): bool
     {
         if (count($this->alquileres) >= $this->maxAlquileres) {
-            return false;
+            throw new CupoSuperadoException("Cupo de alquileres superado (max {$this->maxAlquileres}).");
         }
         if ($s->alquilado) {
-            return false;
+            throw new SoporteYaAlquiladoException("El soporte #{$s->getNumero()} ya está alquilado.");
         }
         // marcar y añadir
         $s->alquilado = true;
@@ -79,6 +81,7 @@ class Cliente
                 return;
             }
         }
+        $s->alquilado = true;
         $this->alquileres[] = $s;
     }
 
@@ -89,7 +92,8 @@ class Cliente
     {
         foreach ($this->alquileres as $i => $a) {
             if ($a->getNumero() === $numeroProducto) {
-                // quitar del array
+                // marcar como no alquilado y quitar del array
+                $a->alquilado = false;
                 array_splice($this->alquileres, $i, 1);
                 return true;
             }
