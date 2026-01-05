@@ -79,3 +79,7 @@
 [2026-01-05T08:58:28.418879+01:00] VideoclubLogger.INFO: Incluido socio {"nombre":"A","numSocio":1,"usuario":"a","maxAlquileres":3} []
 [2026-01-05T08:58:28.418905+01:00] VideoclubLogger.WARNING: Cliente no encontrado {"numSocio":99} []
 [2026-01-05T08:58:28.418946+01:00] VideoclubLogger.WARNING: Soporte no encontrado - no se realiza alquiler {"numProd":999,"numSocio":1} []
+[2026-01-05T17:00:24.802051+01:00] VideoclubLogger.INFO: Videoclub inicializado {"direccion":"Severo 8A"} []
+[2026-01-05T17:00:24.833398+01:00] VideoclubLogger.INFO: Incluido socio {"nombre":"Amancio Ortega","numSocio":1,"usuario":"amancio","maxAlquileres":3} []
+[2026-01-05T17:00:24.833444+01:00] VideoclubLogger.INFO: Incluido socio {"nombre":"Pablo Picasso","numSocio":2,"usuario":"pablo","maxAlquileres":3} []
+[2026-01-05T17:00:41.147275+01:00] VideoclubLogger.INFO: Incluido socio {"nombre":"awd","numSocio":3,"usuario":"awd","maxAlquileres":3} []
