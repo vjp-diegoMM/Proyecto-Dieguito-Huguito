@@ -6,8 +6,11 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use PHPUnit\Framework\TestCase;
 use Dwes\ProyectoVideoclub\Videoclub;
 use Dwes\ProyectoVideoclub\Cliente;
+use Dwes\ProyectoVideoclub\Dvd;
+use Dwes\ProyectoVideoclub\Bluray;
 use Dwes\ProyectoVideoclub\Util\CupoSuperadoException;
 use Dwes\ProyectoVideoclub\Util\SoporteYaAlquiladoException;
+use Dwes\ProyectoVideoclub\Exception\ClienteNoExisteException;
 
 final class VideoclubTest extends TestCase
 {
@@ -102,15 +105,11 @@ final class VideoclubTest extends TestCase
         $this->assertCount(0, $vc->socios[0]->getAlquileres());
     }
 
-    public function testAlquilarConClienteOProductoInexistenteNoRompe(): void
+    public function testProductoInexistenteNoRompe(): void
     {
         $vc = new Videoclub();
         $vc->incluirCintaVideo(null, 'P1', 1.0, 60);
         $vc->incluirSocio('A', 'a', 'p');
-
-        // cliente inexistente -> no excepción, no cambios
-        $vc->alquilaSocioProducto(99, 1);
-        $this->assertEquals(0, $vc->getNumProductosAlquilados());
 
         // producto inexistente -> no excepción, no cambios
         $vc->alquilaSocioProducto(1, 999);
@@ -208,12 +207,105 @@ final class VideoclubTest extends TestCase
     {
         $vc = new Videoclub();
         $vc->incluirCintaVideo(null, 'P1', 1.0, 60);
-        $vc->incluirSocio('A', 'a', 'p');
 
-        // Intenta devolver con cliente inexistente
+        // Intenta devolver con cliente inexistente - ahora lanza excepción
+        $this->expectException(ClienteNoExisteException::class);
         $vc->devolverSocioProducto(99, 1);
+    }
+
+    // ===== NUEVOS TESTS PARA ClienteNoExisteException =====
+
+    public function testExcepcionClienteNoExisteAlAlquilar(): void
+    {
+        $vc = new Videoclub();
+        $vc->incluirCintaVideo(null, 'P1', 1.0, 60);
+
+        $this->expectException(ClienteNoExisteException::class);
+        $vc->alquilaSocioProducto(99, 1);
+    }
+
+    public function testExcepcionClienteNoExisteAlDevolver(): void
+    {
+        $vc = new Videoclub();
+        $vc->incluirCintaVideo(null, 'P1', 1.0, 60);
+
+        $this->expectException(ClienteNoExisteException::class);
+        $vc->devolverSocioProducto(99, 1);
+    }
+
+    // ===== NUEVOS TESTS PARA DURACION EN DVD =====
+
+    public function testDvdAlmacenaDuracion(): void
+    {
+        $dvd = new Dvd('Test DVD', 1, 5.0, ['es', 'en'], '16:9', 120, null);
         
-        // No debe lanzar excepción, todo debe estar igual
+        $this->assertEquals(120, $dvd->getDuracion());
+    }
+
+    public function testIncluirDvdConDuracion(): void
+    {
+        $vc = new Videoclub();
+        $vc->incluirDvd(null, 'Inception', 3.5, ['es', 'en'], '16:9', 148);
+
+        $this->assertCount(1, $vc->productos);
+        $dvd = $vc->productos[0];
+        $this->assertInstanceOf(Dvd::class, $dvd);
+        $this->assertEquals(148, $dvd->getDuracion());
+    }
+
+    // ===== NUEVOS TESTS PARA BLURAY =====
+
+    public function testBlurayHeredaDeSoporte(): void
+    {
+        $bluray = new Bluray('Test Bluray', 1, 15.0, 180, true, null);
+        
+        $this->assertInstanceOf(\Dwes\ProyectoVideoclub\Soporte::class, $bluray);
+    }
+
+    public function testBlurayAlmacenaTituloYDuracion(): void
+    {
+        $bluray = new Bluray('Avatar', 1, 12.99, 162, false, null);
+        
+        $this->assertEquals('Avatar', $bluray->getTitulo());
+        $this->assertEquals(162, $bluray->getDuracion());
+        $this->assertEquals(1, $bluray->getNumero());
+        $this->assertEquals(12.99, $bluray->getPrecio());
+    }
+
+    public function testBlurayAlmacenaAttributoIs4k(): void
+    {
+        $bluray4k = new Bluray('4K Movie', 1, 18.99, 200, true, null);
+        $blurayNormal = new Bluray('Normal Movie', 2, 15.99, 150, false, null);
+        
+        $this->assertTrue($bluray4k->isIs4k());
+        $this->assertFalse($blurayNormal->isIs4k());
+    }
+
+    public function testIncluirBlurayEnVideoclub(): void
+    {
+        $vc = new Videoclub();
+        $vc->incluirBluray(null, 'Dune', 16.5, 166, true);
+
+        $this->assertCount(1, $vc->productos);
+        $bluray = $vc->productos[0];
+        $this->assertInstanceOf(Bluray::class, $bluray);
+        $this->assertEquals('Dune', $bluray->getTitulo());
+        $this->assertEquals(166, $bluray->getDuracion());
+        $this->assertTrue($bluray->isIs4k());
+    }
+
+    public function testAlquilarYDevolverBluray(): void
+    {
+        $vc = new Videoclub();
+        $vc->incluirBluray(null, 'Interstellar', 17.99, 169, true);
+        $vc->incluirSocio('Carlos', 'carlos', 'pass');
+
+        $vc->alquilaSocioProducto(1, 1);
+        $this->assertTrue($vc->productos[0]->alquilado);
+        $this->assertEquals(1, $vc->getNumProductosAlquilados());
+
+        $vc->devolverSocioProducto(1, 1);
+        $this->assertFalse($vc->productos[0]->alquilado);
         $this->assertEquals(0, $vc->getNumProductosAlquilados());
     }
 }

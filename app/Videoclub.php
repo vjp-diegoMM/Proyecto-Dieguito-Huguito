@@ -2,9 +2,10 @@
 
 namespace Dwes\ProyectoVideoclub;
 
-use Dwes\ProyectoVideoclub\Util\ClienteNoEncontradoException;
-use Dwes\ProyectoVideoclub\Util\SoporteNoEncontradoException;
-use Dwes\ProyectoVideoclub\Util\VideoclubException;
+use Dwes\ProyectoVideoclub\Exception\ClienteNoEncontradoException;
+use Dwes\ProyectoVideoclub\Exception\SoporteNoEncontradoException;
+use Dwes\ProyectoVideoclub\Exception\VideoclubException;
+use Dwes\ProyectoVideoclub\Exception\ClienteNoExisteException;
 
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
@@ -76,10 +77,10 @@ class Videoclub
         ]);
     }
 
-    public function incluirDvd( $metacriticUrl, string $titulo, float $precio, $idiomas, $formatoPantalla)
+    public function incluirDvd( $metacriticUrl, string $titulo, float $precio, $idiomas, $formatoPantalla, int $duracion = 0)
     {
         $numero = count($this->productos) + 1;
-        $dvd = new Dvd($titulo, $numero, $precio, $idiomas, $formatoPantalla, $metacriticUrl);
+        $dvd = new Dvd($titulo, $numero, $precio, $idiomas, $formatoPantalla, $duracion, $metacriticUrl);
         $this->productos[] = $dvd;
 
         $this->logger->info('Incluido DVD', [
@@ -87,6 +88,23 @@ class Videoclub
             'numero' => $numero,
             'precio' => $precio,
             'idiomas' => $idiomas,
+            'duracion' => $duracion,
+            'metacritic' => $metacriticUrl
+        ]);
+    }
+
+    public function incluirBluray( $metacriticUrl, string $titulo, float $precio, int $duracion, bool $is4k)
+    {
+        $numero = count($this->productos) + 1;
+        $bluray = new Bluray($titulo, $numero, $precio, $duracion, $is4k, $metacriticUrl);
+        $this->productos[] = $bluray;
+
+        $this->logger->info('Incluido Bluray', [
+            'titulo' => $titulo,
+            'numero' => $numero,
+            'precio' => $precio,
+            'duracion' => $duracion,
+            'is4k' => $is4k,
             'metacritic' => $metacriticUrl
         ]);
     }
@@ -145,10 +163,7 @@ class Videoclub
         }
 
         // buscar cliente
-        $cliente = $this->obtenerClientePorNumero($numSocio);
-        if (!$cliente) {
-            return $this;
-        }
+        $cliente = $this->obtenerClientePorNumeroOExcepcion($numSocio);
 
         // validar y obtener soportes
         $soportes = $this->validarYObtenerSoportes($numerosProductos, $numSocio);
@@ -223,16 +238,28 @@ class Videoclub
 
     public function devolverSocioProductos(int $numSocio, array $numerosProductos)
     {
-        $cliente = $this->obtenerClientePorNumero($numSocio);
-        if (!$cliente) {
-            return $this;
-        }
+        $cliente = $this->obtenerClientePorNumeroOExcepcion($numSocio);
 
         foreach ($numerosProductos as $numProd) {
             $this->devolverProductoDelCliente($cliente, $numProd, $numSocio);
         }
 
         return $this;
+    }
+
+    /**
+     * Obtiene un cliente por su número, lanzando excepción si no existe
+     * @throws ClienteNoExisteException
+     */
+    private function obtenerClientePorNumeroOExcepcion(int $numSocio): Cliente
+    {
+        foreach ($this->socios as $s) {
+            if (method_exists($s, 'getNumero') && $s->getNumero() === $numSocio) {
+                return $s;
+            }
+        }
+        $this->logger->warning('Cliente no encontrado', ['numSocio' => $numSocio]);
+        throw new ClienteNoExisteException("Cliente número $numSocio no existe");
     }
 
     /**
